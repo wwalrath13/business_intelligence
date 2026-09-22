@@ -15,5 +15,4 @@ qc = querychat::querychat(
               ChatISA Job Scout collected."
 ) 
 
-qc$app()
-
+qc$app_obj()
