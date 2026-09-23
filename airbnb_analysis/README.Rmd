@@ -1,0 +1,86 @@
+---
+title: "README"
+author: "Westin Walrath"
+date: "2026-09-23"
+output: html_document
+---
+
+# Airbnb Market Analysis Findings
+
+1. Hosts with 10 or more listings account for 31.89945% of Chicago's listings, meaning 1/3 of listings come from large hosts
+
+2. North Linden has the lowest median price per person among qualifying Columbus neighborhoods at $32.55 per person, making it the least expensive neighborhood that qualifies
+
+3. The top 10% of Columbus listings earn 36.08206% of the city's total estimated revenue
+
+4. In October 2026 19.02697% of Columbus entire-home/apartment listings are mostly taken, the lowest percentage of the three cities.
+
+5. There are 456 listings with no availability records, and Chicago has the most at 267.
+
+##B1 Task 7
+```{r}
+superhost_summary = listings |>
+  dplyr::filter(
+    room_type == "Entire home/apt",
+    host_is_superhost %in% c("t", "f")
+  ) |>
+  dplyr::group_by(city, host_is_superhost) |>
+  dplyr::summarize(
+    median_price = median(price, na.rm = TRUE),
+    median_rating = median(review_scores_rating, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+premiums = superhost_summary |>
+  dplyr::select(city, host_is_superhost, median_price) |>
+  tidyr::pivot_wider(
+    names_from = host_is_superhost,
+    values_from = median_price
+  ) |>
+  dplyr::mutate(
+    premium = t - f
+  )
+
+superhost_summary
+premiums
+```
+##B1Suplimental
+```{r}
+superhost_summary |>
+  dplyr::filter(city == "Twin Cities")
+```
+
+
+##B1 Writeup
+In the Twin Cities, Superhosts have a median price of $266.93 compared with $268.31 for other hosts. A premium of -$1.38, this means data does not support the claim that having a badge means a higher price. To clarify the typical airbnb superhost has a lower median price, this means that getting the badge does not mean the host can raise prices. 
+
+##B2 Code
+```{r}
+task1_shares = listings_hosts |>
+  dplyr::group_by(city) |>
+  dplyr::summarize(
+    host_10_plus_share = mean(listing_count >= 10) * 100,
+    .groups = "drop"
+  )
+
+task4_shares = listings |>
+  dplyr::group_by(city) |>
+  dplyr::arrange(dplyr::desc(estimated_revenue_l365d), .by_group = TRUE) |>
+  dplyr::mutate(
+    rank = dplyr::row_number(),
+    top_10 = rank <= ceiling(0.10 * dplyr::n())
+  ) |>
+  dplyr::summarize(
+    total_revenue = sum(estimated_revenue_l365d, na.rm = TRUE),
+    top_10_revenue = sum(estimated_revenue_l365d[top_10], na.rm = TRUE),
+    revenue_share = top_10_revenue / total_revenue * 100,
+    .groups = "drop"
+  )
+
+task1_shares
+task4_shares
+```
+##B2 Writeup 
+The proposed rule would have the largest effect on Columbus because 37.1% if all listings in Columbus are held by hosts with 10 or more listings. This is compared to Chicago at 31.9% and the Twin Cities at 17.2%. The top 10% of listings earn roughly 36% of Columbus's revenue. The council should note that this data cannot predict what hosts would do if they were above the cap. That is would any property over 10 no longer be listed or if they would sell them to other hosts.
+
+
